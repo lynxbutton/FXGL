@@ -69,7 +69,7 @@ public class HandTrackingSample extends GameApplication {
                         g.clearRect(0, 0, getAppWidth(), getAppHeight());
 
                         var v0 = points.get(0);
-                        var v1 = points.getLast();
+                        var v1 = points.get(points.size() - 1);
 
                         g.strokeLine(v0.getX(), v0.getY(), v1.getX(), v1.getY());
                     }
