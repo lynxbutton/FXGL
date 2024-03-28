@@ -22,7 +22,6 @@ import com.almasb.fxgl.entity.level.LevelLoader
 import com.almasb.fxgl.logging.Logger
 import com.almasb.fxgl.scene.CSS
 import com.almasb.fxgl.scene3d.Model3D
-import com.almasb.fxgl.scene3d.computingProject.SoulModelLoader
 import com.almasb.fxgl.scene3d.obj.ObjModelLoader
 import com.almasb.fxgl.texture.Texture
 import com.almasb.fxgl.texture.getDummyImage
@@ -849,14 +848,8 @@ private class Model3DAssetLoader : AssetLoader<Model3D>(
     override fun load(url: URL): Model3D {
         val isObj = url.toExternalForm().endsWith("obj")
 
-        val isSoul = url.toExternalForm().endsWith("soul")
-
         if (isObj) {
             return ObjModelLoader().load(url)
-        }
-        else if (isSoul)
-        {
-            return SoulModelLoader().load(url)
         }
 
         throw UnsupportedOperationException("Cannot load from URL: $url")

@@ -34,14 +34,13 @@ public class Model3DSample extends GameApplication {
         getGameScene().setBackgroundColor(Color.LIGHTCYAN);
 
         camera3D = getGameScene().getCamera3D();
-        //camera3D.getTransform().translateY(-5);
+        camera3D.getTransform().translateY(-5);
         camera3D.getTransform().lookAt(Point3D.ZERO);
 
         // cube.obj is loaded from /assets/models/
         // cube.mtl (if exists) should also be located in the same directory
-        //var model = getAssetLoader().loadModel3D("fox.obj");
-        var model = getAssetLoader().loadModel3D("fox1.soul");
-        //model.setMaterial(new PhongMaterial(Color.BLUE));
+        var model = getAssetLoader().loadModel3D("cube.obj");
+        model.setMaterial(new PhongMaterial(Color.BLUE));
 
         // some models are tiny, so require scaling up
         model.setScaleX(35);
