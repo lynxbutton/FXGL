@@ -10,10 +10,12 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.app.scene.Camera3D;
 import javafx.geometry.Point3D;
+import javafx.scene.chart.Axis;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
+import static javafx.scene.transform.Rotate.*;
 
 /**
  * @author Almas Baimagambetov (almaslvl@gmail.com)
@@ -44,9 +46,14 @@ public class Model3DSample extends GameApplication {
         //model.setMaterial(new PhongMaterial(Color.BLUE));
 
         // some models are tiny, so require scaling up
-        model.setScaleX(35);
-        model.setScaleY(35);
-        model.setScaleZ(35);
+        model.setScaleX(55);
+        model.setScaleY(55);
+        model.setScaleZ(55);
+        model.setRotationAxis(Y_AXIS);
+        model.setRotate(90);
+        //model.setRotationAxis(X_AXIS);
+        //model.setRotate(0);
+
 
         entityBuilder()
                 .view(model)

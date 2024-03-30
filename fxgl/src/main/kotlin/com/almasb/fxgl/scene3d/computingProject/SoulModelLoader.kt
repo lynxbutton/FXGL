@@ -20,7 +20,7 @@ class SoulModelLoader : Model3DLoader {
 
     companion object {
         private val soulParsers = linkedMapOf<(String) -> Boolean, (List<String>, SoulData) -> Unit>()
-        private val mtlParsers = linkedMapOf<(String) -> Boolean, (List<String>, MtlData) -> Unit>()
+        //private val mtlParsers = linkedMapOf<(String) -> Boolean, (List<String>, MtlData) -> Unit>()
 
         init {
             soulParsers[ { it.startsWith("g") }  ] = Companion::parseGroup
@@ -29,15 +29,15 @@ class SoulModelLoader : Model3DLoader {
             soulParsers[ { it.startsWith("vn") }  ] = Companion::parseVertexNormals
             soulParsers[ { it.startsWith("v ") }  ] = Companion::parseVertices
             soulParsers[ { it.startsWith("f") }  ] = Companion::parseFaces
-            soulParsers[ { it.startsWith("mtllib") }  ] = Companion::parseMaterialLib
+            //soulParsers[ { it.startsWith("mtllib") }  ] = Companion::parseMaterialLib
             soulParsers[ { it.startsWith("usemtl") }  ] = Companion::parseUseMaterial
 
-            mtlParsers[ { it.startsWith("newmtl") }  ] = Companion::parseNewMaterial
-            mtlParsers[ { it.startsWith("Ka") }  ] = Companion::parseColorAmbient
-            mtlParsers[ { it.startsWith("Kd") }  ] = Companion::parseColorDiffuse
-            mtlParsers[ { it.startsWith("Ks") }  ] = Companion::parseColorSpecular
-            mtlParsers[ { it.startsWith("Ns") }  ] = Companion::parseSpecularPower
-            mtlParsers[ { it.startsWith("map_Kd") }  ] = Companion::parseDiffuseMap
+            soulParsers[ { it.startsWith("newmtl") }  ] = Companion::parseNewMaterial
+            soulParsers[ { it.startsWith("Ka") }  ] = Companion::parseColorAmbient
+            soulParsers[ { it.startsWith("Kd") }  ] = Companion::parseColorDiffuse
+            soulParsers[ { it.startsWith("Ks") }  ] = Companion::parseColorSpecular
+            soulParsers[ { it.startsWith("Ns") }  ] = Companion::parseSpecularPower
+            soulParsers[ { it.startsWith("map_Kd") }  ] = Companion::parseDiffuseMap
         }
 
         private fun parseGroup(tokens: List<String>, data: SoulData) {
@@ -116,19 +116,19 @@ class SoulModelLoader : Model3DLoader {
             }
         }
 
-        private fun parseMaterialLib(tokens: List<String>, data: SoulData) {
+        /*private fun parseMaterialLib(tokens: List<String>, data: SoulData) {
             val fileName = tokens[0]
+            print(tokens)
             val mtlURL = URL(data.url.toExternalForm().substringBeforeLast('/') + '/' + fileName)
 
             val mtlData = loadMtlData(mtlURL)
 
             data.materials += mtlData.materials
             data.ambientColors += mtlData.ambientColors
-        }
+        }*/
 
         private fun parseUseMaterial(tokens: List<String>, data: SoulData) {
             data.currentGroup.subGroups += SubGroup()
-
             data.currentGroup.currentSubGroup.material = data.materials[tokens[0]]
                 ?: throw RuntimeException("Material with name ${tokens[0]} not found")
 
@@ -152,34 +152,34 @@ class SoulModelLoader : Model3DLoader {
             return if (this[0] == "off") 0 else this[0].toInt()
         }
 
-        private fun parseNewMaterial(tokens: List<String>, data: MtlData) {
+        private fun parseNewMaterial(tokens: List<String>, data: SoulData) {
             data.currentMaterial = PhongMaterial()
             data.materials[tokens[0]] = data.currentMaterial
         }
 
-        private fun parseColorAmbient(tokens: List<String>, data: MtlData) {
+        private fun parseColorAmbient(tokens: List<String>, data: SoulData) {
             data.ambientColors[data.currentMaterial] = tokens.toColor()
         }
 
-        private fun parseColorDiffuse(tokens: List<String>, data: MtlData) {
+        private fun parseColorDiffuse(tokens: List<String>, data: SoulData) {
             data.currentMaterial.diffuseColor = tokens.toColor()
         }
 
-        private fun parseColorSpecular(tokens: List<String>, data: MtlData) {
+        private fun parseColorSpecular(tokens: List<String>, data: SoulData) {
             data.currentMaterial.specularColor = tokens.toColor()
         }
 
-        private fun parseSpecularPower(tokens: List<String>, data: MtlData) {
+        private fun parseSpecularPower(tokens: List<String>, data: SoulData) {
             data.currentMaterial.specularPower = tokens[0].toDouble()
         }
 
-        private fun parseDiffuseMap(tokens: List<String>, data: MtlData) {
+        private fun parseDiffuseMap(tokens: List<String>, data: SoulData) {
             val ext = data.url.toExternalForm().substringBeforeLast("/") + "/"
 
             data.currentMaterial.diffuseMap = FXGL.getAssetLoader().loadImage(URL(ext + tokens[0]))
         }
 
-        private fun loadObjData(url: URL): SoulData {
+        private fun loadSoulData(url: URL): SoulData {
             val data = SoulData(url)
 
             load(url, soulParsers, data)
@@ -187,13 +187,13 @@ class SoulModelLoader : Model3DLoader {
             return data
         }
 
-        private fun loadMtlData(url: URL): MtlData {
+        /*private fun loadMtlData(url: URL): MtlData {
             val data = MtlData(url)
 
             load(url, mtlParsers, data)
 
             return data
-        }
+        }*/
 
         private fun <T> load(url: URL,
                              parsers: Map<(String) -> Boolean, (List<String>, T) -> Unit>,
@@ -221,7 +221,7 @@ class SoulModelLoader : Model3DLoader {
     // TODO: smoothing groups
     override fun load(url: URL): Model3D {
         try {
-            val data = loadObjData(url)
+            val data = loadSoulData(url)
             val modelRoot = Model3D()
 
             data.groups.forEach {

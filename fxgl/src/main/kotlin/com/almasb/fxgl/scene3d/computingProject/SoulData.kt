@@ -19,6 +19,8 @@ internal class SoulData(val url: URL) {
     val materials = hashMapOf<String, Material>()
     val ambientColors = hashMapOf<Material, Color>()
 
+    lateinit var currentMaterial: PhongMaterial
+
     val currentGroup: SoulGroup
         get() {
             // it is possible there are no groups in the obj file,
