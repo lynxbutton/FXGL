@@ -9,10 +9,9 @@ package sandbox.test3d;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.app.scene.Camera3D;
+import com.almasb.fxgl.scene3d.computingProject.CompressSoul;
 import javafx.geometry.Point3D;
-import javafx.scene.chart.Axis;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 import static javafx.scene.transform.Rotate.*;
@@ -42,7 +41,8 @@ public class Model3DSample extends GameApplication {
         // cube.obj is loaded from /assets/models/
         // cube.mtl (if exists) should also be located in the same directory
         //var model = getAssetLoader().loadModel3D("fox.obj");
-        var model = getAssetLoader().loadModel3D("fox1.soul");
+        new CompressSoul().compress("fxgl-samples/src/main/resources/assets/models/fox2.dae");
+        var model = getAssetLoader().loadModel3D("fox2.soul");
         //model.setMaterial(new PhongMaterial(Color.BLUE));
 
         // some models are tiny, so require scaling up

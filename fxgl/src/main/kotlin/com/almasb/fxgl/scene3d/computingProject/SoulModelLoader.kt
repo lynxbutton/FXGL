@@ -9,6 +9,8 @@ import javafx.scene.shape.CullFace
 import javafx.scene.shape.MeshView
 import javafx.scene.shape.TriangleMesh
 import javafx.scene.shape.VertexFormat
+import java.io.BufferedReader
+import java.io.File
 import java.net.URL
 
 /**
@@ -23,21 +25,20 @@ class SoulModelLoader : Model3DLoader {
         //private val mtlParsers = linkedMapOf<(String) -> Boolean, (List<String>, MtlData) -> Unit>()
 
         init {
-            soulParsers[ { it.startsWith("g") }  ] = Companion::parseGroup
-            soulParsers[ { it.startsWith("s") }  ] = Companion::parseSmoothing
-            soulParsers[ { it.startsWith("vt") }  ] = Companion::parseVertexTextures
-            soulParsers[ { it.startsWith("vn") }  ] = Companion::parseVertexNormals
-            soulParsers[ { it.startsWith("v ") }  ] = Companion::parseVertices
-            soulParsers[ { it.startsWith("f") }  ] = Companion::parseFaces
-            //soulParsers[ { it.startsWith("mtllib") }  ] = Companion::parseMaterialLib
-            soulParsers[ { it.startsWith("usemtl") }  ] = Companion::parseUseMaterial
+            soulParsers[{ it.startsWith("g") }] = Companion::parseGroup
+            soulParsers[{ it.startsWith("s") }] = Companion::parseSmoothing
+            soulParsers[{ it.startsWith("vt") }] = Companion::parseVertexTextures
+            soulParsers[{ it.startsWith("vn") }] = Companion::parseVertexNormals
+            soulParsers[{ it.startsWith("v ") }] = Companion::parseVertices
+            soulParsers[{ it.startsWith("f") }] = Companion::parseFaces
+            soulParsers[{ it.startsWith("usemtl") }] = Companion::parseUseMaterial
 
-            soulParsers[ { it.startsWith("newmtl") }  ] = Companion::parseNewMaterial
-            soulParsers[ { it.startsWith("Ka") }  ] = Companion::parseColorAmbient
-            soulParsers[ { it.startsWith("Kd") }  ] = Companion::parseColorDiffuse
-            soulParsers[ { it.startsWith("Ks") }  ] = Companion::parseColorSpecular
-            soulParsers[ { it.startsWith("Ns") }  ] = Companion::parseSpecularPower
-            soulParsers[ { it.startsWith("map_Kd") }  ] = Companion::parseDiffuseMap
+            soulParsers[{ it.startsWith("newmtl") }] = Companion::parseNewMaterial
+            soulParsers[{ it.startsWith("Ka") }] = Companion::parseColorAmbient
+            soulParsers[{ it.startsWith("Kd") }] = Companion::parseColorDiffuse
+            soulParsers[{ it.startsWith("Ks") }] = Companion::parseColorSpecular
+            soulParsers[{ it.startsWith("Ns") }] = Companion::parseSpecularPower
+            soulParsers[{ it.startsWith("map_Kd") }] = Companion::parseDiffuseMap
         }
 
         private fun parseGroup(tokens: List<String>, data: SoulData) {
@@ -68,7 +69,7 @@ class SoulModelLoader : Model3DLoader {
             if (tokens.size > 3) {
                 for (i in 2 until tokens.size) {
                     parseFaceVertex(tokens[0], data)
-                    parseFaceVertex(tokens[i-1], data)
+                    parseFaceVertex(tokens[i - 1], data)
                     parseFaceVertex(tokens[i], data)
                 }
             } else {
@@ -132,7 +133,8 @@ class SoulModelLoader : Model3DLoader {
             data.currentGroup.currentSubGroup.material = data.materials[tokens[0]]
                 ?: throw RuntimeException("Material with name ${tokens[0]} not found")
 
-            data.currentGroup.currentSubGroup.ambientColor = data.ambientColors[data.currentGroup.currentSubGroup.material]
+            data.currentGroup.currentSubGroup.ambientColor =
+                data.ambientColors[data.currentGroup.currentSubGroup.material]
         }
 
         private fun List<String>.toFloats2(): List<Float> {
@@ -182,19 +184,87 @@ class SoulModelLoader : Model3DLoader {
         private fun loadSoulData(url: URL): SoulData {
             val data = SoulData(url)
 
+            //decompress it here and pass string to parsers
+            //val content = decompressSoul(url)
+            //val inputString = url.openStream().bufferedReader().use { it.readText() }
+            //val inputString = "tex<3,1>s.forEach(<8,1>un<6,1>ti<13,1>n <10,1>t<24,3>Obj)<10,1>{<12,1> <14,1> <4,3> <8,7> <28,1>c<42,1>nv<45,1>s<52,1>r<58,1>m<54,1>v<62,1>(<41,8>;<40,24>add<37,23>}<53,2>"
+            //val content = decompressSoul(inputString)
+            //print(content)
+            //load(content, soulParsers, data)
             load(url, soulParsers, data)
 
             return data
         }
 
-        /*private fun loadMtlData(url: URL): MtlData {
-            val data = MtlData(url)
+        private fun decompressSoul(content: String): String {
+            val contentBytes = content.toByteArray(Charsets.UTF_8)
+            var output = ""
+            var inToken = false
+            var scanOffset = true
 
-            load(url, mtlParsers, data)
+            var length = byteArrayOf()
+            var offset = byteArrayOf()
 
-            return data
+            for (byte in contentBytes) {
+                if (byte.toChar() == '<') {
+                    inToken = true
+                    scanOffset = true
+                    //print("Found token opening")
+                } else if (byte.toChar() == ',' && inToken) {
+                    scanOffset = false
+                } else if (byte.toChar() == '>') {
+                    inToken = false
+                    //print("Found token ending")
+
+                    val lengthNum = length.decodeToString().toInt()
+                        //print("Found token with length $lengthNum, ")
+                    val offsetNum = offset.decodeToString().toInt()
+
+                    //val refText = output.copyOfRange(output.size - offsetNum, output.size - offsetNum + lengthNum)
+                    val refText = output.slice(output.length - offsetNum .. output.length - offsetNum + lengthNum)
+                    output += refText
+
+                    length = byteArrayOf()
+                    offset = byteArrayOf()
+
+                } else if (inToken) {
+                    if (scanOffset) {
+                        offset += byteArrayOf(byte)
+                    } else {
+                        length += byteArrayOf(byte)
+                    }
+                } else {
+                    output += byte.toChar()
+                }
+
+            }
+            //print(content)
+
+            return output
+        }
+
+        /*private fun <T> load(
+            content: String,
+            parsers: Map<(String) -> Boolean, (List<String>, T) -> Unit>,
+            data: T
+        ) {
+
+            val contentArr = content.split("\n").toTypedArray()
+            contentArr.forEach { line ->
+
+                val lineTrimmed = line.trim()
+
+                for ((condition, action) in parsers) {
+                    if (condition.invoke(lineTrimmed)) {
+                        // drop identifier
+                        val tokens = lineTrimmed.split(" +".toRegex()).drop(1)
+
+                        action.invoke(tokens, data)
+                        break
+                    }
+                }
+            }
         }*/
-
         private fun <T> load(url: URL,
                              parsers: Map<(String) -> Boolean, (List<String>, T) -> Unit>,
                              data: T) {

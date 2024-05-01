@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
+import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class CompressionMain {
 
@@ -38,7 +39,7 @@ public class CompressionMain {
         return new byte[0];
     }
     public static void main(String[] args) throws Exception{
-        byte[] original = Files.readAllBytes(Paths.get("fxgl-samples/src/main/resources/assets/models/cube.obj"));
+        byte[] original = Files.readAllBytes(Paths.get("fxgl-samples/src/main/resources/assets/models/fox1.soul"));
 
         byte[] compressed = compress(original);
 
@@ -48,5 +49,8 @@ public class CompressionMain {
         byte[] decompressed = decompress(compressed);
 
         System.out.println(Arrays.equals(original, decompressed));
+
+        new CompressSoul().compress("fxgl-samples/src/main/resources/assets/models/fox.obj");
+
     }
 }
