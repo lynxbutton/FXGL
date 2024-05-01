@@ -110,6 +110,8 @@ class CompressSoul : Compress3D {
         var inMesh = false
         var findFaces = false
         var findTexture = false
+        var image = ""
+        var material = ""
 
         var i = 0
         if(daeList.size != 0)
@@ -119,8 +121,16 @@ class CompressSoul : Compress3D {
                 val lineTrim = line.trim()
                 var beginLine = ""
 
-
                 if(lineTrim.startsWith("<mesh>")){inMesh = true}
+
+                if(lineTrim.startsWith("<init_from>") && lineTrim.contains(".png"))
+                {
+                    image = daeList[i].substringAfter('>').substringBefore('<')
+                }
+                else if(lineTrim.startsWith("<material"))
+                {
+                    material = daeList[i].substringAfter("name=\"").substringBefore("\">")
+                }
 
                 if(inMesh)
                 {
@@ -181,13 +191,13 @@ class CompressSoul : Compress3D {
 
                 if(findTexture && inMesh)
                 {
-                    soulList.add("newmtl material.01")
+                    soulList.add("newmtl $material")
                     soulList.add("Ns 100.000000")
                     soulList.add("Ka 0.200000 0.200000 0.200000")
                     soulList.add("Ks 0.000000 0.000000 0.000000")
                     soulList.add("Ke 0.000000 0.000000 0.000000")
-                    soulList.add("map_Kd texture.png")
-                    soulList.add("usemtl material.01")
+                    soulList.add("map_Kd $image")
+                    soulList.add("usemtl $material")
                     findFaces = true
                     findTexture = false
                 }
@@ -213,7 +223,7 @@ class CompressSoul : Compress3D {
         }
         else { print("DAE File is empty\n") }
 
-        print(soulList)
+        //print(soulList)
         return soulList
     }
 
