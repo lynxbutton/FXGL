@@ -109,6 +109,7 @@ class CompressSoul : Compress3D {
         val soulList = ArrayList<String>()
         var inMesh = false
         var findFaces = false
+        var findTexture = false
 
         var i = 0
         if(daeList.size != 0)
@@ -158,7 +159,7 @@ class CompressSoul : Compress3D {
                 }
                 else if(beginLine == "vt")
                 {
-                    findFaces = true
+                    findTexture = true
                     val arr = daeList[i + 1].substringAfter(">").split(" ")
                     var num = 0
                     while(num <= arr.size)
@@ -177,6 +178,19 @@ class CompressSoul : Compress3D {
                     }
                 }
                 else{beginLine = ""}
+
+                if(findTexture && inMesh)
+                {
+                    soulList.add("newmtl material.01")
+                    soulList.add("Ns 100.000000")
+                    soulList.add("Ka 0.200000 0.200000 0.200000")
+                    soulList.add("Ks 0.000000 0.000000 0.000000")
+                    soulList.add("Ke 0.000000 0.000000 0.000000")
+                    soulList.add("map_Kd texture.png")
+                    soulList.add("usemtl material.01")
+                    findFaces = true
+                    findTexture = false
+                }
 
                 if(findFaces && inMesh && lineTrim.startsWith("<triangles"))
                 {
