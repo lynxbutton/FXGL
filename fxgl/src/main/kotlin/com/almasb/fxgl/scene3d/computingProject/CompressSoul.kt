@@ -237,23 +237,18 @@ class CompressSoul : Compress3D {
 
     fun compressData(txt : String) : ByteArray
     {
-        val textArray = txt.encodeToByteArray() //Original text as a byte array
-        var compressedData = byteArrayOf() //Will be filled with new text as bytes
+        val textArray = txt.encodeToByteArray() //Original text as byte array
+        var compressedData = byteArrayOf() //New text as byte array
 
-        val maxWindow = 500 //Maximum of elements in the search & look vars
-        var indexSearchFirst = 0 //What index the search starts from
-        var indexLookLast = 0 // What index the look ends from
+        val maxWindow = 500 // Maximum number of elements in search buffer
+        var indexSearchFirst = 0 //What index the search buffer starts at
 
         var lookAhead = ArrayList<Byte>() //Elements that are about to show up
-        var o = 0
-        textArray.forEach {
-            if(o <= maxWindow){lookAhead.add(it)
-            indexLookLast = o}
-            o += 1 }
+        textArray.forEach { lookAhead.add(it) }
 
         val searchBuffer = ArrayList<Byte>() //Elements that have previously appeared
-        var skip = 0 //Whether to skip characters and how many if so
-        var x = 0 //Counts how many times the main loop iterates
+        var skip = 0 //Whether to skip characters and how many
+        var x = 0 //Counts the number of loop iterations
 
         for(char in textArray)
         {
@@ -298,14 +293,6 @@ class CompressSoul : Compress3D {
                 searchBuffer.removeFirst()
                 indexSearchFirst += 1
             }
-            if(lookAhead.size < maxWindow)
-            {
-                if(lookAhead.size > indexLookLast + 1)
-                {
-                    lookAhead.add(textArray[indexLookLast + 1])
-                    indexLookLast += 1
-                }
-            }
             x += 1
         }
         //print(compressedData.decodeToString())
@@ -348,26 +335,33 @@ class CompressSoul : Compress3D {
                         val temp = "<${index + indexOffset},$length>"
                         if(byte == search[index + y])
                         {
+                            //print("\n${char} & ${byte} & ${search[index + y]} & $length\n")
+                            //print("${index} & $y & ${index + y}\n")
+                            //print(look)
                             length += 1
                             y += 1
                         }
                         else if(length > 2 && num + length >= search.size - 1 + look.size - 1)
                         {
                             length -= 2
-                            token = "<${index + indexOffset},$length>"
-                            if(token.length > length)
+                            if(temp.length > length)
                             {
                                 token = ""
                             }
+                            else{
+                                token = "<${index + indexOffset},$length>"
+                            }
                             createToken = false
                         }
-                        else if(length > 2 && temp.length <= token.length)
+                        else if(length > 2 && temp.length >= token.length)
                         {
                             length -= 1
-                            token = "<${index + indexOffset},$length>"
-                            if(token.length > length)
+                            if(temp.length > length)
                             {
                                 token = ""
+                            }
+                            else{
+                                token = "<${index + indexOffset},$length>"
                             }
                             createToken = false
 
@@ -388,7 +382,7 @@ class CompressSoul : Compress3D {
         }
         else
         {
-            return char.toInt().toChar().toString()
+            return char.toChar().toString()
         }
     }
 
