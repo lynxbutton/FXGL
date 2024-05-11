@@ -52,7 +52,7 @@ public class Model3DSample extends GameApplication {
         model.setRotationAxis(Y_AXIS);
         model.setRotate(90);
         //model.setRotationAxis(X_AXIS);
-        //model.setRotate(0);
+        model.setRotate(0);
 
 
         entityBuilder()

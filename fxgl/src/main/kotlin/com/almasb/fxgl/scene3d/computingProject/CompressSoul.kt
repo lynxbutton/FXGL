@@ -19,7 +19,7 @@ class CompressSoul : Compress3D {
             if(objList.isNotEmpty() && mtlList.isNotEmpty())
             {
                 val soulList = convertObjtoSoul(objList, mtlList)
-                exportSoul(soulList, fullPath.dropLast(3))
+                //exportSoul(soulList, fullPath.dropLast(3))
             }
         }
         else if(isDae)
@@ -28,7 +28,15 @@ class CompressSoul : Compress3D {
             if(daeList.isNotEmpty())
             {
                 val soulList = convertDaetoSoul(daeList)
-                exportSoul(soulList, fullPath.dropLast(3))
+                var tempList = ""
+                for(line in soulList)
+                {
+                    tempList += "$line\n"
+                }
+                val compressedSoul = compressData(tempList)
+                //print(compressedSoul.decodeToString())
+
+                exportSoul(compressedSoul.decodeToString(), fullPath.dropLast(3))
             }
         }
     }
@@ -69,7 +77,7 @@ class CompressSoul : Compress3D {
                         for(mtlLine in mtlList)
                         {
                             if(mtlLine.startsWith("newmtl") || mtlLine.startsWith("Ka")
-                                || mtlLine.startsWith("Kd") || mtlLine.startsWith("Ks")
+                                || mtlLine.startsWith("Kd") || mtlLine.startsWith("Ks") || mtlLine.startsWith("Ke")
                                 || mtlLine.startsWith("Ns") || mtlLine.startsWith("map_Kd"))
                             {
                                 soulList.add(mtlLine)
@@ -93,7 +101,7 @@ class CompressSoul : Compress3D {
     private fun convertNum(line : String) : String
     {
         var newLine = ""
-        if(line == "10e-7")
+        if(line.contains("10e-"))
         {
             newLine = "0.000001"
         }
@@ -227,161 +235,164 @@ class CompressSoul : Compress3D {
         return soulList
     }
 
-    private fun compressData(content: String) : String
+    fun compressData(txt : String) : ByteArray
     {
-        //LZ77 style approach to compression
+        val textArray = txt.encodeToByteArray() //Original text as a byte array
+        var compressedData = byteArrayOf() //Will be filled with new text as bytes
 
-        val contentBytes = content.toByteArray(Charsets.UTF_8)
+        val maxWindow = 500 //Maximum of elements in the search & look vars
+        var indexSearchFirst = 0 //What index the search starts from
+        var indexLookLast = 0 // What index the look ends from
 
+        var lookAhead = ArrayList<Byte>() //Elements that are about to show up
+        var o = 0
+        textArray.forEach {
+            if(o <= maxWindow){lookAhead.add(it)
+            indexLookLast = o}
+            o += 1 }
 
-        /*var output = ""
-        val maxSlideWindow = 4096
+        val searchBuffer = ArrayList<Byte>() //Elements that have previously appeared
+        var skip = 0 //Whether to skip characters and how many if so
+        var x = 0 //Counts how many times the main loop iterates
 
-        val searchBuffer = ArrayList<Int>()
-        val byteArray = content.toByteArray(Charsets.UTF_8)
-        val checkChar = ArrayList<Int>()
-
-        var i = 0
-
-        for(byte in byteArray)
+        for(char in textArray)
         {
-            var index = elementsInArr(checkChar, searchBuffer)
-            if(elementsInArr(checkChar + byte.toInt(), searchBuffer) == -1 || byteArray.size - 1 == i)
+            if(skip == 0)
             {
-                if(elementsInArr(checkChar + byte.toInt(), searchBuffer) != -1 || byteArray.size - 1 == i)
+                //print("$searchBuffer\n$char\n$lookAhead\n")
+
+                if(searchBuffer.size > 1)
                 {
-                    checkChar.add(byte.toInt())
-                }
 
-                if(checkChar.size > 1)
-                {
-                    val offset = i - index - checkChar.size
-                    val length = checkChar.size
-
-                    val token = "<$offset,$length>"
-
-                    if(token.length > length)
+                    val temp = findLongestMatch(char, x, indexSearchFirst,searchBuffer, lookAhead)
+                    if(temp.length > 1)
                     {
-                        checkChar.forEach {
-                            output += it.toChar()
-                        }
+                        /*for (byte in lookAhead) {
+                            print(byte.toChar())
+                        }*/
+                        skip = temp.substringAfter(',').substringBefore(">").toInt() - 1
+                        //print("\n$skip\
                     }
-                    else
-                    {
-                        output += token
-                    }
-                    searchBuffer.addAll(checkChar)
+                    if(lookAhead.isNotEmpty()){lookAhead.removeFirst()}
+                    searchBuffer.add(char)
+                    compressedData += temp.encodeToByteArray()
+                    //print("$temp")
                 }
                 else
                 {
-                    checkChar.forEach {
-                        output += it.toChar()
-                    }
-                    searchBuffer.addAll(checkChar)
+                    //print("${char.toChar()}")
+                    compressedData += char
+                    if(lookAhead.isNotEmpty()){lookAhead.removeFirst()}
+                    searchBuffer.add(char)
                 }
-                checkChar.clear()
-            }
-            checkChar.add(byte.toInt())
-
-            if(searchBuffer.size > maxSlideWindow)
-            {
-                searchBuffer.removeAt(0)
-            }
-            i += 1
-        }*/
-
-        /*for(byte in byteArray)
-        {
-            //checkChar.add(byte.toInt())
-            //var index = elementsInArr(checkChar, searchBuffer)
-            var temp = checkChar
-            temp += byte.toInt()
-            //print(temp)
-            if(elementsInArr(temp, searchBuffer) == -1 || i == byteArray.size - 1)
-            {
-                if(i == byteArray.size - 1 && elementsInArr(temp,searchBuffer) != -1)
-                {
-                    checkChar.add(byte.toInt())
-                }
-                if(checkChar.size > 1)
-                {
-                    //val index = elementsInArr(checkChar.subList(0, checkChar.size - 2), searchBuffer)
-                    val index = elementsInArr(checkChar, searchBuffer)
-                    val offset = i - index - checkChar.size
-                    val length = checkChar.size
-
-                    val token = "<$offset,$length>"
-
-                    if(token.length > length)
-                    {
-                        //print("\n")
-                        checkChar.forEach{
-                            newContent += it.toChar()
-                        }
-                    }
-                    else
-                    {
-                        //print(token)
-                        newContent += token
-                    }
-                    checkChar.forEach {
-                        searchBuffer.add(it)
-                    }
-                }
-                else
-                {
-                    //print("\n${byte.toChar()}")
-                    //newContent += byte.toChar()
-                    checkChar.forEach{
-                        newContent += it.toChar()
-                    }
-                    checkChar.forEach {
-                        searchBuffer.add(it)
-                    }
-                }
-
-                checkChar.clear()
-            }
-
-            checkChar.add(byte.toInt())
-
-            if(searchBuffer.size > maxSlideWindow)
-            {
-                searchBuffer.removeAt(0)
-            }
-
-            i += 1
-        }*/
-
-        return ""
-    }
-
-    private fun elementsInArr(checkEle : List<Int>, elements: ArrayList<Int>) : Int
-    {
-        var i = 0
-        var offset = 0
-
-        for(element in elements)
-        {
-            if(checkEle.size <= offset)
-            {
-                return i - checkEle.size
-            }
-            if(checkEle[offset] == element)
-            {
-                offset += 1
             }
             else
             {
-                offset = 0
+                skip -= 1
+                if(lookAhead.isNotEmpty()){lookAhead.removeFirst()}
+                searchBuffer.add(char)
+            }
+
+            if(searchBuffer.size > maxWindow)
+            {
+                searchBuffer.removeFirst()
+                indexSearchFirst += 1
+            }
+            if(lookAhead.size < maxWindow)
+            {
+                if(lookAhead.size > indexLookLast + 1)
+                {
+                    lookAhead.add(textArray[indexLookLast + 1])
+                    indexLookLast += 1
+                }
+            }
+            x += 1
+        }
+        //print(compressedData.decodeToString())
+
+        return compressedData
+    }
+
+    fun findLongestMatch(char : Byte, num : Int, indexOffset : Int, search : ArrayList<Byte>, look : ArrayList<Byte>) : String
+    {
+        val occurTimes = ArrayList<Int>()
+        var i = 0
+        for(element in search)
+        {
+            if(element == char)
+            {
+                occurTimes.add(i)
             }
             i += 1
         }
+        //print("CHARACTER: ${char.toChar()} OCCURENCES: $occurTimes\n")
 
-        return -1
+
+        var token = ""
+
+        for(index in occurTimes)
+        {
+            var createToken = true
+            var length = 0
+            var y = 0
+            //print("\nNEW OCCURENCE\n")
+            for(byte in look)
+            {
+                //print("${byte}\n")
+                //val temp = index.toString().length + length.toString().length + 3
+
+                if(createToken)
+                {
+                    if(index + y < search.size)
+                    {
+                        val temp = "<${index + indexOffset},$length>"
+                        if(byte == search[index + y])
+                        {
+                            length += 1
+                            y += 1
+                        }
+                        else if(length > 2 && num + length >= search.size - 1 + look.size - 1)
+                        {
+                            length -= 2
+                            token = "<${index + indexOffset},$length>"
+                            if(token.length > length)
+                            {
+                                token = ""
+                            }
+                            createToken = false
+                        }
+                        else if(length > 2 && temp.length <= token.length)
+                        {
+                            length -= 1
+                            token = "<${index + indexOffset},$length>"
+                            if(token.length > length)
+                            {
+                                token = ""
+                            }
+                            createToken = false
+
+                        }
+                        else if(length < 2 && y > 0 || length > 0)
+                        {
+                            createToken = false
+                            token = ""
+                        }
+                    }
+                }
+            }
+        }
+
+        if(token.isNotEmpty())
+        {
+            return token
+        }
+        else
+        {
+            return char.toInt().toChar().toString()
+        }
     }
 
-    private fun exportSoul(soulList: ArrayList<String>, path: String)
+    private fun exportSoul(soulList: String, path: String)
     {
         val fileName = path + "soul"
 
@@ -390,7 +401,7 @@ class CompressSoul : Compress3D {
         for(line in soulList)
         {
             content += line
-            content += "\n"
+            //content += "\n"
         }
         //val newContent = compressData(content)
         // create a new file

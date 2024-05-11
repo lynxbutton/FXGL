@@ -186,64 +186,77 @@ class SoulModelLoader : Model3DLoader {
 
             //decompress it here and pass string to parsers
             //val content = decompressSoul(url)
-            //val inputString = url.openStream().bufferedReader().use { it.readText() }
+            val inputString = url.openStream().bufferedReader().use { it.readText() }
+            val content = decompressSoul(inputString)
+            print(content.decodeToString())
             //val inputString = "tex<3,1>s.forEach(<8,1>un<6,1>ti<13,1>n <10,1>t<24,3>Obj)<10,1>{<12,1> <14,1> <4,3> <8,7> <28,1>c<42,1>nv<45,1>s<52,1>r<58,1>m<54,1>v<62,1>(<41,8>;<40,24>add<37,23>}<53,2>"
             //val content = decompressSoul(inputString)
             //print(content)
             //load(content, soulParsers, data)
-            load(url, soulParsers, data)
+            load(content.decodeToString(), soulParsers, data)
 
             return data
         }
 
-        private fun decompressSoul(content: String): String {
-            val contentBytes = content.toByteArray(Charsets.UTF_8)
-            var output = ""
+        fun decompressSoul(txt : String) : ByteArray
+        {
+            val textArray = txt.encodeToByteArray()
+            var uncompressedData = byteArrayOf();
             var inToken = false
-            var scanOffset = true
+            var findLength = false
 
-            var length = byteArrayOf()
-            var offset = byteArrayOf()
+            var index = ""
+            var length = ""
 
-            for (byte in contentBytes) {
-                if (byte.toChar() == '<') {
+            for(char in textArray)
+            {
+                //print("CHAR:${char.toChar()}\n")
+                if(char.toInt().toChar() == '<')
+                {
                     inToken = true
-                    scanOffset = true
-                    //print("Found token opening")
-                } else if (byte.toChar() == ',' && inToken) {
-                    scanOffset = false
-                } else if (byte.toChar() == '>') {
-                    inToken = false
-                    //print("Found token ending")
-
-                    val lengthNum = length.decodeToString().toInt()
-                        //print("Found token with length $lengthNum, ")
-                    val offsetNum = offset.decodeToString().toInt()
-
-                    //val refText = output.copyOfRange(output.size - offsetNum, output.size - offsetNum + lengthNum)
-                    val refText = output.slice(output.length - offsetNum .. output.length - offsetNum + lengthNum)
-                    output += refText
-
-                    length = byteArrayOf()
-                    offset = byteArrayOf()
-
-                } else if (inToken) {
-                    if (scanOffset) {
-                        offset += byteArrayOf(byte)
-                    } else {
-                        length += byteArrayOf(byte)
-                    }
-                } else {
-                    output += byte.toChar()
                 }
+                else if(char.toInt().toChar() == ',' && inToken)
+                {
+                    findLength = true
+                }
+                else if(char.toInt().toChar() == '>' && findLength)
+                {
+                    inToken = false
+                    findLength = false
+                    //print(length.toInt())
+                    //print(index.toInt())
+                    //add all token letters here!
+                    var num = 0
+                    while(num < length.toInt())
+                    {
+                        uncompressedData += uncompressedData[index.toInt() + num]
 
+                        num += 1
+                    }
+                    index = ""
+                    length = ""
+                }
+                else if(inToken && !findLength)
+                {
+                    index += char.toInt().toChar()
+                    //print("INDEX:$index\n")
+                }
+                else if(inToken && findLength)
+                {
+                    length += char.toInt().toChar()
+                    //print("LENGTH:$length\n")
+                }
+                else
+                {
+                    uncompressedData += char
+                }
+                //print("$index & $length")
             }
-            //print(content)
 
-            return output
+            return uncompressedData
         }
 
-        /*private fun <T> load(
+        private fun <T> load(
             content: String,
             parsers: Map<(String) -> Boolean, (List<String>, T) -> Unit>,
             data: T
@@ -264,8 +277,8 @@ class SoulModelLoader : Model3DLoader {
                     }
                 }
             }
-        }*/
-        private fun <T> load(url: URL,
+        }
+        /*private fun <T> load(url: URL,
                              parsers: Map<(String) -> Boolean, (List<String>, T) -> Unit>,
                              data: T) {
 
@@ -285,7 +298,7 @@ class SoulModelLoader : Model3DLoader {
                     }
                 }
             }
-        }
+        }*/
     }
 
     // TODO: smoothing groups
