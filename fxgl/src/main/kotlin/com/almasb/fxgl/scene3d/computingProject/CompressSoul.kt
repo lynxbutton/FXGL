@@ -19,7 +19,15 @@ class CompressSoul : Compress3D {
             if(objList.isNotEmpty() && mtlList.isNotEmpty())
             {
                 val soulList = convertObjtoSoul(objList, mtlList)
-                //exportSoul(soulList, fullPath.dropLast(3))
+                var tempList = ""
+                for(line in soulList)
+                {
+                    tempList += "$line\n"
+                }
+                val compressedSoul = compressData(tempList)
+                //print(compressedSoul.decodeToString())
+
+                exportSoul(compressedSoul.decodeToString(), fullPath.dropLast(3))
             }
         }
         else if(isDae)

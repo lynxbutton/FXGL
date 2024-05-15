@@ -41,8 +41,8 @@ public class Model3DSample extends GameApplication {
         // cube.obj is loaded from /assets/models/
         // cube.mtl (if exists) should also be located in the same directory
         //var model = getAssetLoader().loadModel3D("fox.obj");
-        new CompressSoul().compress("fxgl-samples/src/main/resources/assets/models/fox2.dae");
-        var model = getAssetLoader().loadModel3D("fox2.soul");
+        new CompressSoul().compress("fxgl-samples/src/main/resources/assets/models/fox.obj");
+        var model = getAssetLoader().loadModel3D("fox.soul");
         //model.setMaterial(new PhongMaterial(Color.BLUE));
 
         // some models are tiny, so require scaling up

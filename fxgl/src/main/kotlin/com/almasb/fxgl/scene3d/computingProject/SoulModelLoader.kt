@@ -200,17 +200,16 @@ class SoulModelLoader : Model3DLoader {
 
         fun decompressSoul(txt : String) : ByteArray
         {
-            val textArray = txt.encodeToByteArray()
-            var uncompressedData = byteArrayOf();
-            var inToken = false
-            var findLength = false
+            val textArray = txt.encodeToByteArray() //compressed data as a byte array
+            var uncompressedData = byteArrayOf(); //new uncompressed data as a byte array
+            var inToken = false // Boolean to check if we are in the token
+            var findLength = false // Boolean to check if we are looking for the length
 
             var index = ""
             var length = ""
 
             for(char in textArray)
             {
-                //print("CHAR:${char.toChar()}\n")
                 if(char.toInt().toChar() == '<')
                 {
                     inToken = true
@@ -223,9 +222,6 @@ class SoulModelLoader : Model3DLoader {
                 {
                     inToken = false
                     findLength = false
-                    //print(length.toInt())
-                    //print(index.toInt())
-                    //add all token letters here!
                     var num = 0
                     while(num < length.toInt())
                     {
@@ -239,18 +235,15 @@ class SoulModelLoader : Model3DLoader {
                 else if(inToken && !findLength)
                 {
                     index += char.toInt().toChar()
-                    //print("INDEX:$index\n")
                 }
                 else if(inToken && findLength)
                 {
                     length += char.toInt().toChar()
-                    //print("LENGTH:$length\n")
                 }
                 else
                 {
                     uncompressedData += char
                 }
-                //print("$index & $length")
             }
 
             return uncompressedData
